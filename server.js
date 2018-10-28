@@ -4,8 +4,9 @@ https=require('https'),
 path = require('path'),
 url=require('url'),
 fs=require('fs'),
-config=require('./config'),
-handlers=require('./lib/handlers')
+config=require('./lib/config'),
+handlers=require('./lib/handlers'),
+helpers=require('./lib/helpers'),
 StringDecoder=require('string_decoder').StringDecoder,
 _data=require('./lib/data');
 
@@ -19,9 +20,9 @@ _data=require('./lib/data');
 // _data.update('test','newFile',{'JJJ':'DDDDDD'},function (err) {
 //   console.log(err);
 // })
-_data.delete('test','newFile',function (err) {
-  console.log(err);
-})
+// _data.delete('test','newFile',function (err) {
+//   console.log(err);
+// })
 var controllers = require(path.resolve('api')).controllers,
 dealsController = controllers.dealsController,
 usersController = controllers.searchController;
@@ -66,20 +67,20 @@ var unifiedServer=function(req,res) {
   var chosenHandler=typeof(router[trimPath])!=='undefined'?router[trimPath]:handlers.notFound;
 
   // TODO: Construct data object to send to handler
-  var data={'path':trimPath,
+   var data={'path':trimPath,
             'query':queryStrings,
             'method':method,
             'headers':reqHeaders,
-            'payload':buffer
+            'payload':helpers.parseJsonToObject(buffer)
               }
-      chosenHandler(data,function(statusCode,payload){
+       chosenHandler(data,function(statusCode,payload){
         statusCode=typeof(statusCode)== 'number'?statusCode:200;
         payload=typeof(payload)=='object'?payload:{};
         var payloadString=JSON.stringify(payload);
         res.setHeader('Content-type','application/json')
         res.writeHead(statusCode);
         res.end(payloadString)
-      console.log(trimPath,method,reqHeaders,queryStrings,buffer,statusCode,payload,"fooo");
+      // console.log(trimPath,method,reqHeaders,queryStrings,buffer,statusCode,payload,"fooo");
     });
   });
 }
@@ -87,5 +88,6 @@ var unifiedServer=function(req,res) {
 
 var router={
   'gettodos':handlers.getTodos,
-  'getUsers':usersController.getTodos
+  'getUsers':usersController.users,
+  'tokens' : usersController.tokens
 }
